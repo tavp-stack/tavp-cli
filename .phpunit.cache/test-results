@@ -1,0 +1,1 @@
+{"version":2,"defects":[],"times":{"Tavp\\Cli\\Tests\\TavpCommandTest::testDispatcherRegistersAllExpectedCommands":0.026,"Tavp\\Cli\\Tests\\TavpCommandTest::testEveryCommandClassIsInstantiable":0}}
