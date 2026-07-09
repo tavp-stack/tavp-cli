@@ -6,8 +6,8 @@ manual, tinggal jalanin perintah.
 
 ## Requirements
 
-- PHP 8.1+
-- Phalcon 5.x (C-extension)
+- PHP 8.3+
+- Phalcon 5.16+ (C-extension)
 - Composer
 
 ## Install
