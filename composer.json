@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "tavp/cli",
     "description":  "The official TAVP command line tool â€” scaffolding, migrations, auth, deploy and more.",
     "type":  "library",
