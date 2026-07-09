@@ -38,6 +38,7 @@ class TavpCommand
         'kit:install' => Commands\KitInstallCommand::class,
         'upgrade' => Commands\UpgradeCommand::class,
         'weave:enable' => Commands\WeaveEnableCommand::class,
+        'phalcon:install' => Commands\PhalconInstallCommand::class,
         'push' => Commands\PushCommand::class,
         'pull' => Commands\PullCommand::class,
         'init' => Commands\InitCommand::class,
