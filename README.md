@@ -50,8 +50,7 @@ composer test
 
 ## Status
 
-Part of **0.1.0 Genesis** (ZeroVer `0.MINOR.PATCH`). API is not yet stable
-until `1.0.0`. See `tavp-docs` for the full milestone checklist.
+Part of **TAVP Stack 1.0.0 (Stable)**. Public API locked. SemVer applies.
 
 ## License
 
