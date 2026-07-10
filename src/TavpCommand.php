@@ -50,6 +50,12 @@ class TavpCommand
     {
         $name = $argv[1] ?? 'help';
 
+        if (in_array($name, ['version', '--version', '-v', '-V'], true)) {
+            $this->printVersion();
+
+            return;
+        }
+
         if (in_array($name, ['help', '--help', '-h'], true)) {
             $this->printHelp();
 
@@ -66,12 +72,35 @@ class TavpCommand
         (new ($this->commands[$name])())->handle(array_slice($argv, 2));
     }
 
+    private function printVersion(): void
+    {
+        echo 'TAVP CLI ' . $this->version() . "\n";
+    }
+
+    private function version(): string
+    {
+        if (class_exists(\Composer\InstalledVersions::class)) {
+            try {
+                $version = \Composer\InstalledVersions::getPrettyVersion('tavp/cli');
+
+                if ($version !== null) {
+                    return $version;
+                }
+            } catch (\Throwable) {
+                // fall through to unknown
+            }
+        }
+
+        return 'unknown';
+    }
+
     private function printHelp(): void
     {
-        echo "TAVP CLI — Tailwind + Alpine + Volt + Phalcon\n\n";
+        echo 'TAVP CLI ' . $this->version() . " — Tailwind + Alpine + Volt + Phalcon\n\n";
         echo "Commands:\n";
         foreach (array_keys($this->commands) as $command) {
             echo "  tavp {$command}\n";
         }
+        echo "\n  tavp version\n";
     }
 }
