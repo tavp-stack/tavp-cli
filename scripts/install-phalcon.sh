@@ -185,7 +185,19 @@ for sapi in apache2 fpm cli; do
         cp "${INI_DIR}/30-phalcon.ini" "/etc/php/${PHP_VERSION}/${sapi}/conf.d/30-phalcon.ini"
     fi
 done
+# Lando / Docker: copy to shared conf.d so both CLI and web server see it.
+if [ -d "/usr/local/etc/php/conf.d" ]; then
+    cp "${INI_DIR}/30-phalcon.ini" "/usr/local/etc/php/conf.d/30-phalcon.ini" 2>/dev/null || true
+fi
 echo "    Enabled in : ${INI_DIR}/30-phalcon.ini"
+
+# Restart web server so the extension is loaded by the web SAPI.
+if command -v apachectl >/dev/null 2>&1; then
+    apachectl restart 2>/dev/null || true
+fi
+if command -v service >/dev/null 2>&1; then
+    service php${PHP_VERSION}-fpm restart 2>/dev/null || true
+fi
 
 # --- [7/7] Verify ------------------------------------------------------
 step "Verifying..."
