@@ -30,7 +30,8 @@ composer require tavp/cli
 | `tavp make:controller` | Generate controller file |
 | `tavp make:migration` | Generate migration file |
 | `tavp make:scaffold` | Generate model + controller + view + migration + route sekaligus |
-| `tavp migrate` | Jalankan / rollback / fresh / seed migration |
+| `tavp migrate` | Jalankan / rollback / fresh / seed migration (`--rollback`, `--fresh`, `--status`, `--seed`, `--step=N`) |
+| `tavp migrate:status` | Tampilkan migration mana yang sudah jalan / pending |
 | `tavp key:generate` | Generate APP_KEY and JWT_SECRET |
 | `tavp phalcon:install` | Install Phalcon C-extension |
 | `tavp deploy` | Deploy to production server |

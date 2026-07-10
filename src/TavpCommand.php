@@ -16,6 +16,7 @@ class TavpCommand
         'new' => Commands\NewCommand::class,
         'serve' => Commands\ServeCommand::class,
         'migrate' => Commands\MigrateCommand::class,
+        'migrate:status' => Commands\MigrateStatusCommand::class,
         'make:migration' => Commands\MakeMigrationCommand::class,
         'make:controller' => Commands\MakeControllerCommand::class,
         'make:model' => Commands\MakeModelCommand::class,
