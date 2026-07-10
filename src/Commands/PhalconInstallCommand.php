@@ -26,8 +26,10 @@ class PhalconInstallCommand
             return;
         }
 
-        $arg = ($phpVersion !== '' ? escapeshellarg($phpVersion) : '')
-            . ' ' . escapeshellarg($phalconVersion);
+        // Always pass both positional args. When phpVersion is empty we pass
+        // a quoted empty string so the script's ${1:-auto-detect} kicks in,
+        // instead of the phalcon version sliding into the PHP-version slot.
+        $arg = escapeshellarg($phpVersion) . ' ' . escapeshellarg($phalconVersion);
 
         echo "Running Phalcon installer...\n";
         passthru('bash ' . escapeshellarg($script) . ' ' . $arg);

@@ -48,10 +48,19 @@ esac
 echo "==> Installing build dependencies..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
+
+# Core build tools (required)
 apt-get install -y \
-    wget git curl build-essential autoconf pkg-config \
-    re2c libpcre3-dev libpcre2-dev zlib1g-dev \
-    "php${PHP_VERSION}-dev" "php${PHP_VERSION}-xml" "php-pear"
+    wget git curl build-essential autoconf pkg-config re2c zlib1g-dev
+
+# PCRE dev headers: libpcre2-dev on modern Debian/Ubuntu (Trixie+),
+# libpcre3-dev on older releases. Try the modern one first.
+apt-get install -y libpcre2-dev || apt-get install -y libpcre3-dev || true
+
+# PHP dev headers (phpize/php-config live here). php-pear is not needed
+# because we compile from source, and it was dropped in Debian Trixie.
+apt-get install -y "php${PHP_VERSION}-dev" || true
+apt-get install -y "php${PHP_VERSION}-xml" || true
 
 PHPIZE="phpize${PHP_VERSION}"
 PHPCONFIG="php-config${PHP_VERSION}"
