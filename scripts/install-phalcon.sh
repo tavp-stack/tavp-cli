@@ -71,11 +71,33 @@ command -v "${PHPCONFIG}" >/dev/null 2>&1 || PHPCONFIG="php-config"
 echo "==> Downloading Phalcon ${PHALCON_VERSION} source..."
 WORKDIR="$(mktemp -d)"
 cd "${WORKDIR}"
-wget -q "https://github.com/phalcon/cphalcon/releases/download/v${PHALCON_VERSION}/phalcon-pecl.tgz" \
-    -O phalcon.tgz
+
+# PECL is the reliable source (its tarball always ships a config.m4).
+# Fall back to the GitHub release asset if PECL is unreachable.
+if ! wget -q "https://pecl.php.net/get/phalcon-${PHALCON_VERSION}.tgz" -O phalcon.tgz; then
+    echo "==> PECL unreachable, trying GitHub release..."
+    wget -q "https://github.com/phalcon/cphalcon/releases/download/v${PHALCON_VERSION}/phalcon-${PHALCON_VERSION}.tgz" \
+        -O phalcon.tgz \
+    || wget -q "https://github.com/phalcon/cphalcon/releases/download/v${PHALCON_VERSION}/phalcon-pecl.tgz" \
+        -O phalcon.tgz
+fi
+
+if [ ! -s phalcon.tgz ]; then
+    echo "ERROR: failed to download Phalcon ${PHALCON_VERSION} source." >&2
+    exit 1
+fi
+
 tar -xzf phalcon.tgz
-BUILD_DIR="$(find "${WORKDIR}" -maxdepth 1 -type d -name 'cphalcon*' | head -1)"
-[ -n "${BUILD_DIR}" ] || BUILD_DIR="${WORKDIR}"
+
+# Locate the actual build root by finding the shallowest config.m4.
+# Tarballs may extract as phalcon-X.Y.Z/, cphalcon-X.Y.Z/, or build/php*/.
+CONFIG_M4="$(find "${WORKDIR}" -name config.m4 -printf '%d %p\n' 2>/dev/null | sort -n | head -1 | cut -d' ' -f2-)"
+if [ -z "${CONFIG_M4}" ]; then
+    echo "ERROR: config.m4 not found after extracting Phalcon source." >&2
+    exit 1
+fi
+BUILD_DIR="$(dirname "${CONFIG_M4}")"
+echo "==> Build directory: ${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
 # --- 6. Compile --------------------------------------------------------
