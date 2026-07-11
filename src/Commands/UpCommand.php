@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace Tavp\Cli\Commands;
 
 /**
- * tavp up — bring the application out of maintenance mode.
+ * tavp up — bring application out of maintenance mode.
  */
 class UpCommand
 {
     public function handle(array $args): void
     {
-        if (is_file('.tavp-down')) {
-            unlink('.tavp-down');
+        $file = getcwd() . '/.tavp-down';
+
+        if (is_file($file)) {
+            unlink($file);
+            echo "Application is back online.\n";
+        } else {
+            echo "Application is not in maintenance mode.\n";
         }
-        echo "Application is back online.\n";
     }
 }
