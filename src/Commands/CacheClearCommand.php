@@ -15,6 +15,8 @@ class CacheClearCommand
 {
     public function handle(array $args): void
     {
+        $this->info('Clearing application cache...');
+
         try {
             $base = Application::getInstance()->getBasePath();
         } catch (\Throwable) {
@@ -22,31 +24,61 @@ class CacheClearCommand
         }
 
         $dirs = [
-            $base . '/storage/compiled/volt',
-            $base . '/storage/cache',
-            $base . '/storage/cms/cache',
+            'Compiled Volt templates' => $base . '/storage/compiled/volt',
+            'File cache' => $base . '/storage/cache',
+            'CMS cache' => $base . '/storage/cms/cache',
         ];
 
-        $cleared = 0;
+        $totalCleared = 0;
 
-        foreach ($dirs as $dir) {
+        foreach ($dirs as $label => $dir) {
             if (!is_dir($dir)) {
+                $this->comment("  {$label}: skipped (not found)");
                 continue;
             }
 
-            $files = glob($dir . '/*');
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                    $cleared++;
-                } elseif (is_dir($file)) {
-                    $this->removeDir($file);
-                    $cleared++;
-                }
+            $count = $this->clearDir($dir);
+            $totalCleared += $count;
+            $this->line("  <info>{$label}</info>: cleared <comment>{$count}</comment> entries");
+        }
+
+        echo "\n";
+        $this->success("Cache cleared! Removed {$totalCleared} entries.");
+    }
+
+    private function clearDir(string $dir): int
+    {
+        $count = 0;
+        $files = glob($dir . '/*');
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+                $count++;
+            } elseif (is_dir($file)) {
+                $count += $this->countDir($file);
+                $this->removeDir($file);
             }
         }
 
-        echo "Cleared {$cleared} cache entries.\n";
+        return $count;
+    }
+
+    private function countDir(string $dir): int
+    {
+        $count = 0;
+        $files = array_diff(scandir($dir), ['.', '..']);
+
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            if (is_file($path)) {
+                $count++;
+            } elseif (is_dir($path)) {
+                $count += $this->countDir($path);
+            }
+        }
+
+        return $count;
     }
 
     private function removeDir(string $dir): void
@@ -57,5 +89,26 @@ class CacheClearCommand
             is_dir($path) ? $this->removeDir($path) : unlink($path);
         }
         rmdir($dir);
+    }
+
+    private function info(string $msg): void
+    {
+        echo "\033[36m{$msg}\033[0m\n";
+    }
+
+    private function comment(string $msg): void
+    {
+        echo "\033[33m{$msg}\033[0m\n";
+    }
+
+    private function line(string $msg): void
+    {
+        $clean = preg_replace('/<[^>]+>/', '', $msg);
+        echo "  {$clean}\n";
+    }
+
+    private function success(string $msg): void
+    {
+        echo "\033[32m✔ {$msg}\033[0m\n";
     }
 }

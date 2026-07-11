@@ -14,7 +14,8 @@ class ScheduleRunCommand
 {
     public function handle(array $args): void
     {
-        echo "Running scheduled tasks...\n\n";
+        $this->info('Running scheduled tasks...');
+        echo "\n";
 
         $ran = 0;
 
@@ -23,12 +24,11 @@ class ScheduleRunCommand
             $ran += $this->runPublishScheduler();
         }
 
-        // Custom tasks can be added here by the application.
-
+        echo "\n";
         if ($ran === 0) {
-            echo "No scheduled tasks to run.\n";
+            $this->comment('No scheduled tasks to run.');
         } else {
-            echo "\nCompleted {$ran} scheduled task(s).\n";
+            $this->success("Completed {$ran} scheduled task(s).");
         }
     }
 
@@ -40,13 +40,39 @@ class ScheduleRunCommand
             $published = $scheduler->publishDue();
 
             foreach ($published as $item) {
-                echo "  Published: [{$item['type']}] {$item['title']} (ID: {$item['id']})\n";
+                $this->line("  <info>Published</info>: [{$item['type']}] {$item['title']} (ID: {$item['id']})");
             }
 
             return count($published);
         } catch (\Throwable $e) {
-            echo "  Publish scheduler error: {$e->getMessage()}\n";
+            $this->error("  Publish scheduler error: {$e->getMessage()}");
             return 0;
         }
+    }
+
+    private function info(string $msg): void
+    {
+        echo "\033[36m{$msg}\033[0m\n";
+    }
+
+    private function comment(string $msg): void
+    {
+        echo "\033[33m{$msg}\033[0m\n";
+    }
+
+    private function line(string $msg): void
+    {
+        $clean = preg_replace('/<[^>]+>/', '', $msg);
+        echo "  {$clean}\n";
+    }
+
+    private function success(string $msg): void
+    {
+        echo "\033[32m✔ {$msg}\033[0m\n";
+    }
+
+    private function error(string $msg): void
+    {
+        echo "\033[31m✘ {$msg}\033[0m\n";
     }
 }
