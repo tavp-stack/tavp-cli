@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tavp\Cli\Commands;
 
+use Tavp\Core\Application;
+
 /**
  * tavp cache:clear — clear all application cache.
  *
@@ -13,10 +15,16 @@ class CacheClearCommand
 {
     public function handle(array $args): void
     {
+        try {
+            $base = Application::getInstance()->getBasePath();
+        } catch (\Throwable) {
+            $base = dirname(__DIR__, 5);
+        }
+
         $dirs = [
-            \base_path('storage/compiled/volt'),
-            \base_path('storage/cache'),
-            \base_path('storage/cms/cache'),
+            $base . '/storage/compiled/volt',
+            $base . '/storage/cache',
+            $base . '/storage/cms/cache',
         ];
 
         $cleared = 0;
