@@ -40,6 +40,7 @@ class TavpCommand
         'upgrade' => Commands\UpgradeCommand::class,
         'weave:enable' => Commands\WeaveEnableCommand::class,
         'phalcon:install' => Commands\PhalconInstallCommand::class,
+        'cms:publish' => Commands\CmsPublishCommand::class,
         'push' => Commands\PushCommand::class,
         'pull' => Commands\PullCommand::class,
         'init' => Commands\InitCommand::class,

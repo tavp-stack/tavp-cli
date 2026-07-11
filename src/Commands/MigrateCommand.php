@@ -32,6 +32,30 @@ class MigrateCommand
 
     public function handle(array $args): void
     {
+        // Bootstrap the application for database access
+        $root = getcwd() ?: '.';
+        if (is_file($root . '/vendor/autoload.php')) {
+            require_once $root . '/vendor/autoload.php';
+        }
+
+        // Initialize Application if not already done
+        if (class_exists(\Tavp\Core\Application::class)) {
+            try {
+                \Tavp\Core\Application::getInstance();
+            } catch (\RuntimeException) {
+                $app = new \Tavp\Core\Application($root);
+                $app->bootstrap();
+
+                // Register database connection using DatabaseManager
+                $app->bind('db', function () use ($app) {
+                    $config = $app->getConfig()->get('database', []);
+                    $manager = new \Tavp\Core\Database\DatabaseManager($config);
+
+                    return $manager->getAdapter();
+                });
+            }
+        }
+
         $mode = 'up';
         $seed = false;
         $step = null;
@@ -170,6 +194,23 @@ class MigrateCommand
         $name = $this->getMigrationName($file);
         $verb = $direction === 'up' ? 'Migrating' : 'Rolling back';
         echo "  {$verb}: {$name}\n";
+
+        $path = $this->migrationsPath . '/' . $file;
+
+        if (!is_file($path)) {
+            echo "    Error: migration file not found: {$path}\n";
+            return;
+        }
+
+        // Include the migration file to get the Migration object
+        $migration = require $path;
+
+        if ($migration instanceof \Tavp\Core\Database\Migrations\Migration) {
+            $schema = new \Tavp\Core\Database\Migrations\SchemaBuilder(app('db'));
+            $migration->{$direction}($schema);
+        } else {
+            echo "    Error: migration must return a Tavp\\Core\\Database\\Migrations\\Migration instance\n";
+        }
     }
 
     private function getAllMigrationFiles(): array
