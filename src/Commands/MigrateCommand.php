@@ -206,11 +206,40 @@ class MigrateCommand
         $migration = require $path;
 
         if ($migration instanceof \Tavp\Core\Database\Migrations\Migration) {
-            $schema = new \Tavp\Core\Database\Migrations\SchemaBuilder(app('db'));
+            // Use PDO directly instead of Phalcon SchemaBuilder
+            $pdo = $this->getPdo();
+            $schema = new \Tavp\Core\Database\Migrations\SqlSchema($pdo);
             $migration->{$direction}($schema);
         } else {
             echo "    Error: migration must return a Tavp\\Core\\Database\\Migrations\\Migration instance\n";
         }
+    }
+
+    private function getPdo(): \PDO
+    {
+        $root = getcwd() ?: '.';
+        $config = [];
+
+        // Load database config
+        if (is_file($root . '/config/database.php')) {
+            $config = require $root . '/config/database.php';
+        }
+
+        $default = $config['default'] ?? 'mysql';
+        $conn = $config['connections'][$default] ?? [];
+
+        $host = $conn['host'] ?? $conn['DB_HOST'] ?? '127.0.0.1';
+        $port = $conn['port'] ?? $conn['DB_PORT'] ?? 3306;
+        $dbname = $conn['dbname'] ?? $conn['database'] ?? $conn['DB_DATABASE'] ?? '';
+        $username = $conn['username'] ?? $conn['DB_USERNAME'] ?? '';
+        $password = $conn['password'] ?? $conn['DB_PASSWORD'] ?? '';
+
+        return new \PDO(
+            "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4",
+            $username,
+            $password,
+            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+        );
     }
 
     private function getAllMigrationFiles(): array
