@@ -64,12 +64,9 @@ class KitInstallCommand
         // Create content types in config
         $cmsConfigFile = $dir . '/config/cms.php';
         if (is_file($cmsConfigFile)) {
-            $cmsConfig = include $cmsConfigFile;
-
+            // Check if content types need to be configured
             foreach ($config['content_types'] as $type) {
-                if (!isset($cmsConfig['content_types'][$type])) {
-                    echo "  Content type '{$type}' needs to be configured in config/cms.php\n";
-                }
+                echo "  Content type '{$type}' needs to be configured in config/cms.php\n";
             }
         }
 

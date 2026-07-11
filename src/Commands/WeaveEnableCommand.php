@@ -18,8 +18,8 @@ class WeaveEnableCommand
         // Check if already enabled
         $configFile = $dir . '/config/app.php';
         if (is_file($configFile)) {
-            $config = include $configFile;
-            if (isset($config['weave']['enabled']) && $config['weave']['enabled'] === true) {
+            $content = file_get_contents($configFile);
+            if (str_contains($content, "'enabled' => true") && str_contains($content, 'weave')) {
                 echo "TAVP Weave is already enabled.\n";
                 return;
             }
@@ -58,11 +58,11 @@ CONFIG;
         echo "\nTAVP Weave enabled!\n";
         echo "\nUsage in code:\n";
         echo "  // Async HTTP request\n";
-        echo "  $response = async(fn () => file_get_contents('https://api.example.com'));\n";
+        echo '  $response = async(fn () => file_get_contents("https://api.example.com"));' . "\n";
         echo "\n  // Parallel execution\n";
-        echo "  $results = parallel([\n";
-        echo "      fn () => fetchDataFromApi1(),\n";
-        echo "      fn () => fetchDataFromApi2(),\n";
-        echo "  ]);\n";
+        echo '  $results = parallel([' . "\n";
+        echo '      fn () => fetchDataFromApi1(),' . "\n";
+        echo '      fn () => fetchDataFromApi2(),' . "\n";
+        echo '  ]);' . "\n";
     }
 }
