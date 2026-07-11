@@ -23,6 +23,12 @@ if (!$loaded) {
     exit(1);
 }
 
+// Bootstrap the Application for CLI commands
+$basePath = dirname($autoloader, 3);
+if (file_exists($basePath . '/bootstrap/app.php')) {
+    require_once $basePath . '/bootstrap/app.php';
+}
+
 use Tavp\Cli\TavpCommand;
 
 $command = new TavpCommand();
