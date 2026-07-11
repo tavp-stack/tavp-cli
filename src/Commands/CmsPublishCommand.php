@@ -25,21 +25,39 @@ class CmsPublishCommand
             } catch (\RuntimeException) {
                 $app = new \Tavp\Core\Application($root);
                 $app->bootstrap();
+
+                // Register database connection
+                $app->bind('db', function () use ($root) {
+                    $config = [];
+                    if (is_file($root . '/config/database.php')) {
+                        $config = require $root . '/config/database.php';
+                    }
+
+                    $default = $config['default'] ?? 'mysql';
+                    $conn = $config['connections'][$default] ?? [];
+                    $host = $conn['host'] ?? '127.0.0.1';
+                    $port = $conn['port'] ?? 3306;
+                    $dbname = $conn['dbname'] ?? $conn['database'] ?? '';
+                    $username = $conn['username'] ?? '';
+                    $password = $conn['password'] ?? '';
+
+                    return new \PDO(
+                        "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4",
+                        $username,
+                        $password,
+                        [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+                    );
+                });
             }
         }
 
         echo "Checking for scheduled content...\n";
 
-        // Find content with status 'scheduled' or 'draft' where published_at has passed
         try {
             $db = app('db');
-            $now = date('Y-m-d H:i:s');
 
-            // Find scheduled content
-            $scheduled = $db->query(
-                "SELECT id, type, data FROM contents WHERE status = 'scheduled'",
-                []
-            );
+            $result = $db->query("SELECT id, type, data FROM contents WHERE status = 'scheduled'");
+            $scheduled = $result->fetchAll();
 
             $published = 0;
 
@@ -49,10 +67,8 @@ class CmsPublishCommand
 
                 if ($publishedAt !== null && strtotime($publishedAt) <= time()) {
                     $data['status'] = 'published';
-                    $db->update('contents', [
-                        'data' => json_encode($data),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ], ['id' => $row['id']]);
+                    $db->prepare("UPDATE contents SET data = ?, updated_at = ? WHERE id = ?")
+                        ->execute([json_encode($data), date('Y-m-d H:i:s'), $row['id']]);
 
                     $title = $data['title'] ?? $row['type'] . '#' . $row['id'];
                     echo "  Published: {$row['type']}/{$title}\n";
