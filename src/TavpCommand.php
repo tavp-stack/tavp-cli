@@ -41,6 +41,8 @@ class TavpCommand
         'weave:enable' => Commands\WeaveEnableCommand::class,
         'phalcon:install' => Commands\PhalconInstallCommand::class,
         'cms:publish' => Commands\CmsPublishCommand::class,
+        'cache:clear' => Commands\CacheClearCommand::class,
+        'schedule:run' => Commands\ScheduleRunCommand::class,
         'push' => Commands\PushCommand::class,
         'pull' => Commands\PullCommand::class,
         'init' => Commands\InitCommand::class,
