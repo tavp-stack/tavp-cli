@@ -12,7 +12,7 @@
 #
 # Idempotent: exits early if Phalcon is already loaded.
 #
-set -euo pipefail
+set -eu
 
 PHP_VERSION="${1:-$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;' 2>/dev/null || echo 8.3)}"
 PHALCON_VERSION="${2:-5.16.0}"
