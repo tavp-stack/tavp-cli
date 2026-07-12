@@ -43,8 +43,6 @@ class TavpCommand
         'cms:publish' => Commands\CmsPublishCommand::class,
         'cache:clear' => Commands\CacheClearCommand::class,
         'schedule:run' => Commands\ScheduleRunCommand::class,
-        'cache:clear' => Commands\CacheClearCommand::class,
-        'schedule:run' => Commands\ScheduleRunCommand::class,
         'push' => Commands\PushCommand::class,
         'pull' => Commands\PullCommand::class,
         'init' => Commands\InitCommand::class,
