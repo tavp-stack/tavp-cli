@@ -4,60 +4,135 @@ declare(strict_types=1);
 
 namespace Tavp\Cli\Commands;
 
+use Tavp\Cli\Support\GeneratesFiles;
+
 /**
- * tavp hub:install — install TAVPhub admin panel into project.
+ * tavp hub:install — install TAVPhub admin panel into a TAVP project.
  */
 class HubInstallCommand
 {
+    use GeneratesFiles;
+
     public function handle(array $args): void
     {
-        $dir = getcwd();
+        $root = $this->projectRoot();
 
         echo "Installing TAVPhub admin panel...\n";
 
-        // Check if already installed
-        if (is_dir($dir . '/vendor/tavp/tavphub')) {
+        if (is_dir($root . '/vendor/tavp/tavphub')) {
             echo "TAVPhub is already installed.\n";
-            return;
+        } else {
+            echo "Adding tavp/tavphub dependency...\n";
+            exec('composer require tavp/tavphub 2>&1', $output, $exitCode);
+            foreach ($output as $line) {
+                echo "  {$line}\n";
+            }
+            if ($exitCode !== 0) {
+                echo "Error: composer require failed.\n";
+                return;
+            }
         }
 
-        // Run composer require
-        echo "Adding tavp/tavphub dependency...\n";
-        exec('composer require tavp/tavphub 2>&1', $output, $exitCode);
+        echo "Suggesting tavp/tavpblocks for ready-made UI components...\n";
+        exec('composer require tavp/tavpblocks --dev 2>&1', $output, $exitCode);
         foreach ($output as $line) {
             echo "  {$line}\n";
         }
 
-        if ($exitCode !== 0) {
-            echo "Error: composer require failed.\n";
+        $this->createConfig($root);
+        $this->registerRoutes($root);
+
+        echo "\nTAVPhub installed!\n";
+        echo "  Visit /admin after building your resources with:\n";
+        echo "    tavp hub:make:resource Product\n";
+    }
+
+    private function createConfig(string $root): void
+    {
+        $configFile = $root . '/config/hub.php';
+        if (is_file($configFile)) {
+            echo "config/hub.php already exists. Skipping.\n";
             return;
         }
 
-        // Create hub config
-        $configDir = $dir . '/config';
-        if (!is_dir($configDir)) {
-            mkdir($configDir, 0755, true);
+        if (!is_dir($root . '/config')) {
+            mkdir($root . '/config', 0755, true);
         }
 
-        $configFile = $configDir . '/hub.php';
-        if (!is_file($configFile)) {
-            $config = <<<'CONFIG'
+        $config = <<<'CONFIG'
 <?php
 
 return [
     'admin_prefix' => '/admin',
-    'brand' => env('APP_NAME', 'My App'),
-    'resources' => [],
+    'brand' => env('APP_NAME', 'TAVP'),
+    'auth' => [
+        'guard' => \Tavp\Hub\Auth\SessionGuard::class,
+        'otp_issuer' => 'tavpid',
+    ],
+    'resources' => [
+        // Explicit resources: 'product' => \App\Resources\ProductResource::class,
+    ],
+    'discovery' => [
+        'enabled' => true,
+        'path' => __DIR__ . '/../app/Resources',
+        'namespace' => 'App\Resources',
+    ],
 ];
+
 CONFIG;
-            file_put_contents($configFile, $config);
-            echo "Created config/hub.php\n";
+
+        file_put_contents($configFile, $config);
+        echo "Created config/hub.php (auto-discovery enabled)\n";
+    }
+
+    /**
+     * Register routes by appending to routes/web.php (TAVP convention).
+     * Creates the file with a minimal router bootstrap if it is missing.
+     */
+    private function registerRoutes(string $root): void
+    {
+        $routesFile = $root . '/routes/web.php';
+
+        if (is_file($routesFile) && str_contains(file_get_contents($routesFile), 'HubModule::routes')) {
+            echo "Routes already registered in routes/web.php. Skipping.\n";
+            return;
         }
 
-        echo "TAVPhub installed!\n";
-        echo "\nNext steps:\n";
-        echo "  1. Add resources to config/hub.php\n";
-        echo "  2. Add routes: \\Tavp\\Hub\\HubModule::routes($router);\n";
-        echo "  3. Visit /admin\n";
+        $snippet = "\n// TAVPhub admin panel\n"
+            . "\\Tavp\\Hub\\HubModule::routes(\$router);\n"
+            . "\\Tavp\\Hub\\ResourceRegistry::discover(__DIR__ . '/../app/Resources', 'App\\Resources');\n";
+
+        if (is_file($routesFile)) {
+            $content = rtrim(file_get_contents($routesFile), "\n") . $snippet . "\n";
+            file_put_contents($routesFile, $content);
+            echo "Registered routes in routes/web.php\n";
+            return;
+        }
+
+        if (!is_dir($root . '/routes')) {
+            mkdir($root . '/routes', 0755, true);
+        }
+
+        $bootstrap = <<<'PHP'
+<?php
+
+// TAVP routes file. Provide a Phalcon Router instance named $router,
+// then register TAVPhub.
+use Phalcon\Mvc\Router;
+use Tavp\Hub\HubModule;
+use Tavp\Hub\ResourceRegistry;
+
+$router = new Router();
+$router->removeExtraSlashes(true);
+
+HubModule::routes($router);
+ResourceRegistry::discover(__DIR__ . '/../app/Resources', 'App\Resources');
+
+return $router;
+
+PHP;
+
+        file_put_contents($routesFile, $bootstrap);
+        echo "Created routes/web.php with TAVPhub routes\n";
     }
 }
