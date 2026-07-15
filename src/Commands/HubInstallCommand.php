@@ -93,14 +93,13 @@ CONFIG;
     {
         $routesFile = $root . '/routes/web.php';
 
-        if (is_file($routesFile) && str_contains(file_get_contents($routesFile), 'HubModule::routes')) {
+        if (is_file($routesFile) && str_contains(file_get_contents($routesFile), 'HubController::routes')) {
             echo "Routes already registered in routes/web.php. Skipping.\n";
             return;
         }
 
         $snippet = "\n// TAVPhub admin panel\n"
-            . "\\Tavp\\Hub\\HubModule::routes(\$router);\n"
-            . "\\Tavp\\Hub\\ResourceRegistry::discover(__DIR__ . '/../app/Resources', 'App\\Resources');\n";
+            . "\\Tavp\\Hub\\HubController::routes(\$router);\n";
 
         if (is_file($routesFile)) {
             $content = rtrim(file_get_contents($routesFile), "\n") . $snippet . "\n";
@@ -119,14 +118,12 @@ CONFIG;
 // TAVP routes file. Provide a Phalcon Router instance named $router,
 // then register TAVPhub.
 use Phalcon\Mvc\Router;
-use Tavp\Hub\HubModule;
-use Tavp\Hub\ResourceRegistry;
+use Tavp\Hub\HubController;
 
 $router = new Router();
 $router->removeExtraSlashes(true);
 
-HubModule::routes($router);
-ResourceRegistry::discover(__DIR__ . '/../app/Resources', 'App\Resources');
+HubController::routes($router);
 
 return $router;
 
